@@ -279,7 +279,7 @@ def create_stocks(watch_remnants, offer_ids):
 
 def create_prices(watch_remnants, offer_ids):
     """
-    Формирует список товаров продавца на озон, которых нет на сайте timeworld.ru, с новыми значениями цен.
+    Формирует список товаров продавца на озон, которые есть на сайте timeworld.ru, с новыми значениями цен.
 
     Args:
         watch_remnants (list of dict): Список остатков товаров с сайта timeworld.ru.
