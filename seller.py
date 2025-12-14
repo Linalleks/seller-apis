@@ -17,13 +17,13 @@ def get_product_list(last_id, client_id, seller_token):
 
     Args:
         last_id (str): Идентификатор последнего товара на предыдущей странице.
-            При первом запросе нужно передать пустое значение.
-            Чтобы получить следующие значения, указать last_id из ответа предыдущего запроса.
+            При первом запросе нужно передать пустую строку.
+            Чтобы получить результаты следующих страниц, нужно указать last_id из ответа предыдущего запроса.
         client_id (str): Идентификатор клиента-продавца озон.
         seller_token (str): Токен от АПИ продавца на озон.
 
     Returns:
-        dict: Список товаров - "items" (не более 1000),
+        list of dict: Список товаров - "items" (не более 1000),
             идентификатор последнего товара на странице - "last_id",
             количество всех товаров продавца - "total".
 
@@ -113,7 +113,7 @@ def update_price(prices: list, client_id, seller_token):
     Обновляет цены товаров продавца на озон.
 
     Args:
-        prices (list): Список цен для обновления
+        prices (list of dict): Список товаров с их ценами для обновления.
         client_id (str): Идентификатор клиента-продавца озон.
         seller_token (str): Токен от АПИ продавца на озон.
 
@@ -135,7 +135,7 @@ def update_price(prices: list, client_id, seller_token):
             }
 
         incorrect execution:
-            >>> print(get_offer_ids([], "123456", ""))
+            >>> print(update_price([], "123456", ""))
             requests.exceptions.HTTPError: 401 Client Error
     """
     url = "https://api-seller.ozon.ru/v1/product/import/prices"
@@ -154,15 +154,16 @@ def update_stocks(stocks: list, client_id, seller_token):
     Обновляет остатки товаров продавца на озон.
 
     Args:
-        stocks (list): Список товаров с их количеством для обновления.
+        stocks (list of dict): Список товаров с их количеством для обновления.
         client_id (str): Идентификатор клиента-продавца озон.
         seller_token (str): Токен от АПИ продавца на озон.
 
     Returns:
         dict: Отчет об обновлении остатков по каждому товару.
 
+    Examples:
     correct execution:
-            >>> print(update_price([],"123456", "82a02da882a02da882a02da8a981b7f3cc882a082a02da8e4af9c41e8551329276dde72"))
+            >>> print(update_stocks([],"123456", "82a02da882a02da882a02da8a981b7f3cc882a082a02da8e4af9c41e8551329276dde72"))
             {
                 "result": [
                     {
@@ -176,7 +177,7 @@ def update_stocks(stocks: list, client_id, seller_token):
             }
 
         incorrect execution:
-            >>> print(update_price([], "123456", ""))
+            >>> print(update_stocks([], "123456", ""))
             requests.exceptions.HTTPError: 401 Client Error
     """
     url = "https://api-seller.ozon.ru/v1/product/import/stocks"
@@ -259,6 +260,7 @@ def create_stocks(watch_remnants, offer_ids):
             >>> print(create_stocks({'Код': 69791, 'Количество': '>10'}, ['69791', '70000']))
             AttributeError: 'str' object has no attribute 'get'
     """
+    # Уберем то, что не загружено в seller
     stocks = []
     for watch in watch_remnants:
         if str(watch.get("Код")) in offer_ids:
@@ -287,10 +289,10 @@ def create_prices(watch_remnants, offer_ids):
 
     Returns:
         list of dict: Список товаров с данными о цене.
-
-    correct execution:
-            >>> print(create_prices([{'Код': 69791, 'Цена': '550.00 руб.'}], ['69791', '70000']))
-            [{'auto_action_enabled': 'UNKNOWN', 'currency_code': 'RUB', 'offer_id': '69791', 'old_price': '0', 'price': '550'}]
+    Examples:
+        correct execution:
+                >>> print(create_prices([{'Код': 69791, 'Цена': '550.00 руб.'}], ['69791', '70000']))
+                [{'auto_action_enabled': 'UNKNOWN', 'currency_code': 'RUB', 'offer_id': '69791', 'old_price': '0', 'price': '550'}]
 
         incorrect execution:
             >>> print(create_prices({'Код': 69791, 'Количество': '>10'}, ['69791', '70000']))
@@ -361,7 +363,8 @@ def divide(lst: list, n: int):
 
 async def upload_prices(watch_remnants, client_id, seller_token):
     """
-    Обновляет цены товаров продавца на озон.
+    Получает список товаров продавца на озон, которые есть на сайте timeworld.ru, с новыми значениями цен
+    и обновляет цены товаров продавца на озон.
 
     Args:
         watch_remnants (list of dict): Список остатков товаров с сайта timeworld.ru.
@@ -381,7 +384,8 @@ async def upload_prices(watch_remnants, client_id, seller_token):
 
 async def upload_stocks(watch_remnants, client_id, seller_token):
     """
-    Обновляет остатки товаров продавца на озон.
+    Получает список всех товаров продавца на озон с новыми значениями количества
+    и обновляет остатки товаров продавца на озон.
 
     Args:
         watch_remnants (list of dict): Список остатков товаров с сайта timeworld.ru.
@@ -391,7 +395,6 @@ async def upload_stocks(watch_remnants, client_id, seller_token):
     Returns:
         not_empty (list of dict): Список товаров, количество которых больше 0, с данными о количестве.
         stocks (list of dict): Список товаров с данными о количестве.
-
     """
     offer_ids = get_offer_ids(client_id, seller_token)
     stocks = create_stocks(watch_remnants, offer_ids)
